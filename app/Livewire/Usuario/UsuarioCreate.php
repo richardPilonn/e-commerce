@@ -40,9 +40,9 @@ class UsuarioCreate extends Component
         $this->validate();
 
         $user = User::create([
+            'name' => $this->nome,
             'email' => $this->email,
             'password' => Hash::make($this->password),
-            'user_type' => 'admin',
         ]);
 
 

@@ -6,8 +6,8 @@ use App\Models\User;
 use App\Models\Usuario;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Faker\Factory as Faker;
 use Illuminate\Support\Facades\Hash;
+use Faker\Factory as Faker;
 
 class UsuarioSeeder extends Seeder
 {
@@ -16,13 +16,14 @@ class UsuarioSeeder extends Seeder
      */
     public function run(): void
     {
-      $faker = Faker::create();
+       $faker = Faker::create();
 
         // Criar 10 usuários de exemplo
         for ($i = 0; $i < 10; $i++) {
 
             // Criando o usuário na tabela 'users'
             $user = User::create([
+                'name' => 'Usuario' . $i,
                 'email' => 'Usuario' . $i . '@test.com',
                 'password' => Hash::make('123456'), // Senha para o usuário
             ]);

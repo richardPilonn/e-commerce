@@ -35,6 +35,5 @@
         </div>
 
         <button type="submit" class="btn btn-success">Cadastrar</button>
-        <a href="{{ route('usuarios.index') }}" class="btn btn-secondary ms-2">Cancelar</a>
     </form>
 </div>

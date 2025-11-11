@@ -3,6 +3,7 @@
 namespace App\Livewire\Produto;
 
 use App\Models\Produto;
+use Illuminate\Support\Facades\Redirect;
 use Livewire\Component;
 
 class ProdutoCreate extends Component

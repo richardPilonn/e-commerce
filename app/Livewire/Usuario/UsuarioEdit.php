@@ -47,6 +47,7 @@ class UsuarioEdit extends Component
         } else {
             $this->usuarioId = $usuario->id;
             $this->nome = $usuario->nome;
+             $this->nome = $usuario->user->nome;
             $this->email = $usuario->user->email;
             $this->password = $usuario->user->password;
             $this->userId = $usuario->user->id;
@@ -65,6 +66,7 @@ class UsuarioEdit extends Component
         ]);
 
         $user->update([
+            'nome' => $this->nome,
             'email' => $this->email,
             'password' => $this->password
         ]);

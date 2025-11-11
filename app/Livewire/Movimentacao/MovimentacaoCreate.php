@@ -6,74 +6,74 @@ use App\Models\Movimentacao;
 use App\Models\Produto;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class MovimentacaoCreate extends Component
 {
 
-    public $produtos;          // lista de produtos
-    public $produtoSelecionado; // ID do produto selecionado
-    public $tipo;               // 'entrada' ou 'saida'
-    public $quantidade;
+   public $produtos;
+    public $selectedProductId;
+    public $tipo = 'saida';
+    public $quantidade_movimentada;
     public $data_movimentacao;
+    public $lowStockAlert = '';
 
     protected $rules = [
-    'produtoSelecionado' => 'required|exists:produtos,id',
-    'tipo' => 'required|in:entrada,saida', // ✅ Usando string
-    'quantidade' => 'required|integer|min:1',
-    'data_movimentacao' => 'required|date',
-];
-
-protected $messages = [
-    'produtoSelecionado.required' => 'Selecione um produto.',
-    'produtoSelecionado.exists' => 'Produto inválido.',
-
-    'tipo.required' => 'Selecione o tipo de movimentação.',
-    'tipo.in' => 'O tipo deve ser entrada ou saída.',
-
-    'quantidade.required' => 'Informe a quantidade.',
-    'quantidade.integer' => 'A quantidade deve ser um número inteiro.',
-    'quantidade.min' => 'A quantidade deve ser no mínimo 1.',
-
-    'data_movimentacao.required' => 'Informe a data da movimentação.',
-    'data_movimentacao.date' => 'A data é inválida.',
-];
-
+        'selectedProductId' => 'required|exists:produtos,id',
+        'tipo' => 'required|in:entrada,saida',
+        'quantidade_movimentada' => 'required|integer|min:1',
+        'data_movimentacao' => 'required|date'
+    ];
 
     public function mount()
     {
         $this->produtos = Produto::orderBy('nome')->get();
+        $this->data_movimentacao = now()->format('Y-m-d');
     }
 
-    public function store()
+    public function registerMovement()
     {
         $this->validate();
 
-        $produto = Produto::find($this->produtoSelecionado);
+        $produto = Produto::findOrFail($this->selectedProductId);
 
-        // Atualiza estoque
-        if ($this->tipo === 'entrada') {
-            $produto->quantidade += $this->quantidade;
-        } else {
-            $produto->quantidade -= $this->quantidade;
+        if ($this->tipo === 'saida' && $produto->quantidade < $this->quantidade_movimentada) {
+            $this->addError('quantidade_movimentada', 'Quantidade em estoque insuficiente.');
+            return;
         }
-        $produto->save();
 
-        // Cria movimentação
+        // Atualizar estoque
+        if ($this->tipo === 'entrada') {
+            $produto->increment('quantidade', $this->quantidade_movimentada);
+        } else {
+            $produto->decrement('quantidade', $this->quantidade_movimentada);
+        }
+
+        // Registrar movimentação
         Movimentacao::create([
-            'produto_id' => $produto->id,
+            'produto_id' => $this->selectedProductId,
             'tipo' => $this->tipo,
-            'quantidade' => $this->quantidade,
-            'data_movimentacao' => $this->data_movimentacao,
+            'quantidade' => $this->quantidade_movimentada,
+            'data_movimentacao' => $this->data_movimentacao
         ]);
 
-        session()->flash('message', 'Movimentação registrada com sucesso!');
+        // Verificar estoque baixo
+        $produto->refresh();
+        if ($produto->quantidade < $produto->quantidade_minima) {
+            $this->lowStockAlert = "ALERTA: Estoque baixo para {$produto->nome}. Quantidade atual: {$produto->quantidade}";
+        } else {
+            $this->lowStockAlert = '';
+        }
 
-        // Limpa formulário
-        $this->reset(['produtoSelecionado', 'tipo', 'quantidade', 'data_movimentacao']);
+        session()->flash('message', 'Movimentação registrada com sucesso!');
+        $this->reset(['quantidade_movimentada', 'tipo']);
+        $this->produtos = Produto::orderBy('nome')->get();
     }
+
 
     public function render()
     {
         return view('livewire.movimentacao.movimentacao-create');
     }
 }
+
